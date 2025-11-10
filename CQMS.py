@@ -3,6 +3,8 @@ import pandas as pd
 import mysql.connector as sql
 import hashlib
 import matplotlib.pyplot as plt
+import seaborn as sns
+import seaborn.objects as so
 from datetime import datetime
 
 # ---- DB Connection ----
@@ -79,6 +81,13 @@ def fetch_by_status(status):
     conn.close()
     return rows
 
+def highlight_above_22(val):
+    if val > avg_resolve_days:
+        color = '#FFC107' 
+    elif val <= avg_resolve_days:
+        color = 'lightgreen' 
+    return f'background-color: {color}'
+    
 # ---- Style ----
 page_style = """
 <style>
@@ -325,6 +334,38 @@ elif st.session_state.page == "dashboard":
         cursor.execute(avg_days)
         avg_resolve_days = cursor.fetchone()[0]
 
+# User_resolved
+        user_avg = """
+        select user_resolved,round(avg(DATEDIFF(date_closed, date_raised)),2) as avg_days
+        from cqms.query_detail where status='Closed' 
+        group by user_resolved order by round(avg(DATEDIFF(date_closed, date_raised)),2) asc ;
+        """
+        cursor.execute(user_avg)
+        user_avg_days = cursor.fetchall()
+        df_user_avg = pd.DataFrame(user_avg_days, columns=["user_resolved", "avg_days"])
+        df_user_avg = df_user_avg.rename(columns =
+        {"user_resolved": "Support Team Members",
+        "avg_days": "Number of days taken to resolve the issue"} )
+        styled_df = (
+                    df_user_avg.style
+                    .applymap(highlight_above_22, subset=["Number of days taken to resolve the issue"])
+                    .set_properties(**{"font-weight": "bold"})
+                    .set_table_styles([
+                        {
+            "selector": "th",
+            "props": [
+                ("background-color", "#0f4c81"),
+                ("color", "white"),
+                ("font-weight", "bold"),
+                ("font-family", "Calibri"),  # Change font here
+                ("font-size", "14px")        # Optional
+            ]
+        }
+    ])
+)
+
+                               
+
         cursor.close()
         conn.close()
 
@@ -348,6 +389,8 @@ elif st.session_state.page == "dashboard":
         <div style='font-size:16px; font-weight:bold;'>Average number of days</div>
         <div style='font-size:26px; color: green;'>{avg_resolve_days}</div>
     """, unsafe_allow_html=True)
+
+        st.dataframe(styled_df, hide_index=True)
 
 
 
