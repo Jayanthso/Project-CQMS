@@ -15,7 +15,8 @@ def dbconnect():
         password='welcome1',
         database='cqms'
     )
-st.set_page_config(layout="wide")
+st.set_page_config(page_title="Client Query Management System",
+layout="wide")
 
 # ---- Password Hashing ----
 def hash_password(password):
@@ -89,14 +90,26 @@ def highlight_above_22(val):
     return f'background-color: {color}'
     
 # ---- Style ----
+
 page_style = """
 <style>
 [data-testid="stAppViewContainer"] {
-    background-color: #f0f6ff;
+    background-color: #f0f8ff;
 }
 </style>
 """
-st.markdown(page_style, unsafe_allow_html=True)
+st.markdown("""
+<style>
+div[data-testid="stselectbox"] select {
+    background-color: #FFF8DC !important;
+    color: #000 !important;
+    border: 1px solid #888 !important;
+    border-radius: 6px !important;
+}
+</style>
+""", unsafe_allow_html=True)
+
+
 
 # ---- Initialize Session State ----
 for key in ["page", "username", "user_id", "user_mobile"]:
@@ -111,11 +124,16 @@ st.title("Client Query Management System")
 
 # ------------------ LOGIN PAGE ------------------
 if st.session_state.page == "login":
-    st.header("Login Page")
+    #col1, col2, col3 = st.columns([1,2,1])
+    #with col2:
+    #   st.image("Logo.png", width=200)
+    
+    #st.header("Login Page")
 
     username = st.text_input("Username")
     password = st.text_input("Password", type="password")
-    role = st.text_input("Role (Client/Support/Admin)")
+    role = st.selectbox("Role", ["Client","Support","Admin"])
+    st.write("Selected: ", role)
 
     if st.button("Login"):
         user = login(username, password, role)
@@ -140,17 +158,16 @@ if st.session_state.page == "login":
 # ------------------ QUERY PAGE (Client) ------------------
 elif st.session_state.page == "Query":
 
-    st.header("Raise Client Query")
+    
     st.write(f"Welcome *{st.session_state.username}*")
 
     page = st.sidebar.radio("Go to", ["Home", "Submit Query", "Track Query", "Logout"])
 
     if page == "Home":
         st.title("🏠 Home Page")
-        st.write("Welcome!")
         
     elif page == "Submit Query":
-        st.title("➕ Insert Data")
+        st.header("Submit Query")
 
     # Fetch Query Heading from DB
         conn = dbconnect()
@@ -164,17 +181,20 @@ elif st.session_state.page == "Query":
         query_description = st.text_area("Enter Query Description")
 
         if st.button("Submit Query"):
-            user_email = get_user_email(st.session_state.username)
-            conn = dbconnect()
-            cursor = conn.cursor()
+            if not (selected_heading and query_description):
+                st.warning("Please fill required fields!")
+            else:
+                user_email = get_user_email(st.session_state.username)
+                conn = dbconnect()
+                cursor = conn.cursor()
 
-            insert_query = """
+                insert_query = """
                 INSERT INTO query_detail 
                 (query_heading, query_description, status, date_raised, client_email, client_mobile, user_id)
                 VALUES (%s, %s, %s, %s, %s, %s, %s)
                 """
 
-            cursor.execute(insert_query, (
+                cursor.execute(insert_query, (
                 selected_heading,
                 query_description,
                 "Open",
@@ -184,11 +204,11 @@ elif st.session_state.page == "Query":
                 st.session_state.user_id
             ))
 
-            conn.commit()
-            cursor.close()
-            conn.close()
+                conn.commit()
+                cursor.close()
+                conn.close()
 
-            st.success("✅ Query Submitted Successfully!")
+                st.success("✅ Query Submitted Successfully!")
     
     elif page == ("Track Query"):
         user_id = st.session_state.user_id
@@ -200,16 +220,27 @@ elif st.session_state.page == "Query":
 
             Track_Query = """
             SELECT query_id, client_email, client_mobile, query_heading, 
-            query_description, status, date_raised, date_closed, user_id 
+            query_description, status, date_raised  
             FROM query_detail where user_id=%s
             """
             cursor.execute(Track_Query, (user_id,))
             result = cursor.fetchall()
 
+            
             if result:
                 df = pd.DataFrame(result, columns=["query_id", "client_email", "client_mobile", "query_heading", 
-                "query_description", "status", "date_raised", "date_closed", "user_id"])
-                st.dataframe(df)
+                "query_description", "status", "date_raised"])
+                
+                df = df.rename(columns =
+            {"query_id": "Query ID",
+            "client_email": "Email ID",
+            "client_mobile": "Mobile Number",
+            "query_heading": "Query Heading",
+            "query_description": "Query Description",
+            "status": "Status",
+            "date_raised": "Date Raised"})
+                st.dataframe(df, hide_index= True)
+
             else:
                 st.warning("No data found!")
 
@@ -286,7 +317,6 @@ elif st.session_state.page == "Admin":
 
                 st.success("User Created Successfully!")
 
-
                 cursor.close()
                 conn.close()
         
@@ -296,8 +326,8 @@ elif st.session_state.page == "Admin":
         go_to_login()
 
 
-
 # ------------------ DASHBOARD PAGE (Support) ------------------
+
 elif st.session_state.page == "dashboard":
     st.header("Support Dashboard")
 
@@ -306,7 +336,6 @@ elif st.session_state.page == "dashboard":
     page = st.sidebar.radio("Go to", ["Home", "View Data", "Logout"])
 
     if page == "Home":
-        st.title("🏠 Home Page")
         st.write("Welcome!")
         conn = dbconnect()
         cursor = conn.cursor()
@@ -317,6 +346,7 @@ elif st.session_state.page == "dashboard":
         FROM query_detail
         GROUP BY status;
         """
+
         cursor.execute(count_status)
         rows = cursor.fetchall()
 
@@ -326,7 +356,9 @@ elif st.session_state.page == "dashboard":
         open_count = status_counts.get("Open", 0)
         closed_count = status_counts.get("Closed", 0)
 
+        
 # Average days to close
+
         avg_days = """
         SELECT ROUND(AVG(DATEDIFF(date_closed, date_raised)),2)
         FROM query_detail;
@@ -334,20 +366,24 @@ elif st.session_state.page == "dashboard":
         cursor.execute(avg_days)
         avg_resolve_days = cursor.fetchone()[0]
 
-# User_resolved
+        # User_resolved
         user_avg = """
-        select user_resolved,round(avg(DATEDIFF(date_closed, date_raised)),2) as avg_days
+        select user_resolved,
+        round(avg(DATEDIFF(date_closed, date_raised)),2) AS avg_days
         from cqms.query_detail where status='Closed' 
         group by user_resolved order by round(avg(DATEDIFF(date_closed, date_raised)),2) asc ;
         """
         cursor.execute(user_avg)
         user_avg_days = cursor.fetchall()
+
         df_user_avg = pd.DataFrame(user_avg_days, columns=["user_resolved", "avg_days"])
         df_user_avg = df_user_avg.rename(columns =
         {"user_resolved": "Support Team Members",
         "avg_days": "Number of days taken to resolve the issue"} )
+        df_user_avg["Number of days taken to resolve the issue"] = df_user_avg["Number of days taken to resolve the issue"].astype(float).round(2)
         styled_df = (
                     df_user_avg.style
+                    .format({"Number of days taken to resolve the issue": "{:.2f}"})
                     .applymap(highlight_above_22, subset=["Number of days taken to resolve the issue"])
                     .set_properties(**{"font-weight": "bold"})
                     .set_table_styles([
@@ -360,12 +396,42 @@ elif st.session_state.page == "dashboard":
                 ("font-family", "Calibri"),  # Change font here
                 ("font-size", "14px")        # Optional
             ]
-        }
-    ])
-)
+            }
+            ])
+            )
+        
+        ## Frequent query
 
-                               
+        heading_query = """
+        select distinct(query_heading),count(1) from cqms.query_detail group by query_heading order by count(1) desc;
+        """
+        cursor.execute(heading_query)
+        heading_query_all = cursor.fetchall()
 
+        df_head = pd.DataFrame(heading_query_all, columns=["distinct(query_heading)", "count(1)"])
+        df_head = df_head.rename(columns =
+        {"distinct(query_heading)": "Query",
+        "count(1)": "Number of issue raised"} )
+        df_head["Number of issue raised"] = df_head["Number of issue raised"].astype(float).round(2)
+        styled1_df = (
+                    df_head.style
+                    .format({"Number of issue raised": "{:.2f}"})
+                    .applymap(highlight_above_22, subset=["Number of issue raised"])
+                    .set_properties(**{"font-weight": "bold"})
+                    .set_table_styles([
+                        {
+            "selector": "th",
+            "props": [
+                ("background-color", "#0f4c81"),
+                ("color", "white"),
+                ("font-weight", "bold"),
+                ("font-family", "Calibri"),  # Change font here
+                ("font-size", "14px")        # Optional
+            ]
+            }
+            ])
+            )
+        
         cursor.close()
         conn.close()
 
@@ -390,8 +456,15 @@ elif st.session_state.page == "dashboard":
         <div style='font-size:26px; color: green;'>{avg_resolve_days}</div>
     """, unsafe_allow_html=True)
 
-        st.dataframe(styled_df, hide_index=True)
+              
 
+        st.write("## 📈 Average Days Taken to Resolve Client Issues")
+        st.dataframe(styled_df, hide_index=True)
+        
+        st.line_chart(df_user_avg, x="Support Team Members", y="Number of days taken to resolve the issue")
+
+        st.write("## 📈 Number issues per query")
+        st.line_chart(df_head, x="Query", y="Number of issue raised")
 
 
     # ----- View data section ----
@@ -427,9 +500,20 @@ elif st.session_state.page == "dashboard":
             "query_id", "client_email", "client_mobile", "query_heading", "query_description",
             "status", "date_raised", "date_closed", "user_id"
         ])
+            df = df.rename(columns =
+            {"query_id": "Query ID", 
+            "client_email": "Client Mail ID",
+            "client_mobile": "Mobile",
+            "query_heading": "Query Heading",
+            "query_description": "Query Description",
+            "status": "Status",
+            "date_raised": "Date Raised",
+            "date_closed": "Date Closed",
+            "user_id": "User ID"}
+            )
 
             st.write("### Results:")
-            st.dataframe(df)
+            st.dataframe(df, hide_index=True)
 
         # Only allow editing when Status = "Open"
             if Status == "Open":
@@ -439,6 +523,7 @@ elif st.session_state.page == "dashboard":
                     edited_df = st.data_editor(
                         df,
                         key="query_edit_table",
+                        hide_index= True,
                         disabled=[
                         "query_id", "client_email", "client_mobile", "query_heading",
                         "query_description", "date_raised", "date_closed", "user_id"
@@ -452,11 +537,11 @@ elif st.session_state.page == "dashboard":
                     updates = 0
 
                     for index, row in edited_df.iterrows():
-                        original_status = df.loc[index, "status"]
-                        new_status = row["status"]
+                        original_status = df.loc[index, "Status"]
+                        new_status = row["Status"]
 
                         if original_status != new_status:
-                            qid = row["query_id"]
+                            qid = row["Query ID"]
                             user_name = st.session_state.username
                             cursor.execute("""
                             UPDATE query_detail 

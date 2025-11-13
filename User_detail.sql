@@ -2,7 +2,7 @@
 -- Query: select * from cqms.user_detail order by user_id asc
 LIMIT 0, 50000
 
--- Date: 2025-11-12 20:20
+-- Date: 2025-11-13 21:57
 */
 INSERT INTO `` (`user_id`,`user_fullname`,`user_name`,`user_mobile`,`user_email`,`user_password`,`user_role`) VALUES (1,'Sai Kapoor','sai.kapoor1','9835300794','sai.kapoor1@example.com','ff7bd97b1a7789ddd2775122fd6817f3173672da9f802ceec57f284325bf589f','Client');
 INSERT INTO `` (`user_id`,`user_fullname`,`user_name`,`user_mobile`,`user_email`,`user_password`,`user_role`) VALUES (2,'Aditya Patel','aditya.patel2','9861537584','aditya.patel2@example.com','ff7bd97b1a7789ddd2775122fd6817f3173672da9f802ceec57f284325bf589f','Client');
@@ -508,3 +508,4 @@ INSERT INTO `` (`user_id`,`user_fullname`,`user_name`,`user_mobile`,`user_email`
 INSERT INTO `` (`user_id`,`user_fullname`,`user_name`,`user_mobile`,`user_email`,`user_password`,`user_role`) VALUES (503,'Jayanth S O','jayanthso1','8999999999','sojayanth@example.com','179588aa09cff63f9230f9d80fb2d294159e3aababd22b3338e922a879f92eca','Client');
 INSERT INTO `` (`user_id`,`user_fullname`,`user_name`,`user_mobile`,`user_email`,`user_password`,`user_role`) VALUES (506,'Jayanth S O','jayanthso11','8999999999','sojayanth1@example.com','179588aa09cff63f9230f9d80fb2d294159e3aababd22b3338e922a879f92eca','Client');
 INSERT INTO `` (`user_id`,`user_fullname`,`user_name`,`user_mobile`,`user_email`,`user_password`,`user_role`) VALUES (507,'Jayanth S O','jayanthso111','8999999999','sojayanth11@example.com','179588aa09cff63f9230f9d80fb2d294159e3aababd22b3338e922a879f92eca','Client');
+INSERT INTO `` (`user_id`,`user_fullname`,`user_name`,`user_mobile`,`user_email`,`user_password`,`user_role`) VALUES (508,'Rahul','rahul.rao12','9800000011','rahul.rao12@example.com','17adf5a9e1fb8d402eb646148ff6a569bb3533c472de34f7975ba60241ef01be','Client');
