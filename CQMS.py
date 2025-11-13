@@ -68,6 +68,7 @@ def go_to_query():
 def go_to_admin():
     st.session_state.page = "Admin"
 
+# To Fetch Status
 def fetch_by_status(status):
     conn = dbconnect()
     cursor = conn.cursor()
@@ -82,6 +83,7 @@ def fetch_by_status(status):
     conn.close()
     return rows
 
+# To highlight which is above average
 def highlight_above_22(val):
     if val > avg_resolve_days:
         color = '#FFC107' 
@@ -393,8 +395,8 @@ elif st.session_state.page == "dashboard":
                 ("background-color", "#0f4c81"),
                 ("color", "white"),
                 ("font-weight", "bold"),
-                ("font-family", "Calibri"),  # Change font here
-                ("font-size", "14px")        # Optional
+                ("font-family", "Calibri"),  
+                ("font-size", "14px")        
             ]
             }
             ])
@@ -425,8 +427,8 @@ elif st.session_state.page == "dashboard":
                 ("background-color", "#0f4c81"),
                 ("color", "white"),
                 ("font-weight", "bold"),
-                ("font-family", "Calibri"),  # Change font here
-                ("font-size", "14px")        # Optional
+                ("font-family", "Calibri"),  
+                ("font-size", "14px")        
             ]
             }
             ])
@@ -572,10 +574,3 @@ elif st.session_state.page == "dashboard":
         st.title("Logout")
         st.button("Logout")
         go_to_login()
-
-
-    
-
-    
-
-
